@@ -1,17 +1,19 @@
-﻿$params = @{
-    VMName = "GPUPV"
-    SourcePath = "C:\Users\james\Downloads\Win11_English_x64.iso"
+﻿#powershell.exe -ExecutionPolicy Bypass -File "C:\Users\Caki\Desktop\Enhanced-GPU-PV\Enhanced-GPU-PV-main\CopyFilesToVM.ps1"
+
+$params = @{
+    VMName = "GPUPVECH"
+     SourcePath = "C:\Users\Caki\Downloads\Win11_25H2_English_x64_v2.iso"
     Edition    = 6
     VhdFormat  = "VHDX"
     DiskLayout = "UEFI"
-    SizeBytes  = 40GB
-    MemoryAmount = 8GB
+    SizeBytes  = 150GB
+    MemoryAmount = 4GB
     CPUCores = 4
     # Make sure your specified switch is configured for the external network. A internet connection is required on the first boot.
     NetworkSwitch = "Default Switch"
-    VHDPath = "C:\ProgramData\Microsoft\Windows\Virtual Hard Disks\"
+    VHDPath = "C:\"
     UnattendPath = "$PSScriptRoot"+"\autounattend.xml"
-    GPUName = "AUTO"
+    GPUName = "SELECT"
     GPUResourceAllocationPercentage = 50
 
     # Valid combinations are: 
@@ -20,15 +22,15 @@
     # 3. Parsec + Virtual-Display-Driver (with or without HDR support depending on the build version of your specified ISO) 
     # 4. Sunshine + Virtual-Display-Driver (with or without HDR support depending on the build version of your specified ISO)
     # 5. Sunshine + ParsecVDA
-    Parsec = $true
-    ParsecVDA = $true
-    Sunshine = $false
-    VirtualDisplayDriver = $false
+    Parsec = $false
+    ParsecVDA = $false
+    Sunshine = $true
+    VirtualDisplayDriver = $true
 
     Team_ID = ""
     Key = ""
-    Username = "GPUVM"
-    Password = "CoolestPassword!"
+    Username = "Test"
+    Password = "Test!!"
     Autologon = "true"
     # Only affects keyboard layout and other minor settings, language is predetermined by the specified ISO
     # If you want to use the default settings by your ISO leave this parameter empty like this: ""  
@@ -114,6 +116,94 @@ param (
             Read-host -Prompt "Press any key to Exit..."
             Exit
         }
+    }
+}
+
+Function Get-PartitionableGpuCandidates {
+    $partitionableGpuList = @(Get-WmiObject -Class "Msvm_PartitionableGpu" -ComputerName $env:COMPUTERNAME -Namespace "ROOT\virtualization\v2" -ErrorAction Stop)
+    $displayDrivers = @(Get-WmiObject Win32_PNPSignedDriver -ErrorAction Stop | Where-Object { $_.DeviceClass -eq "DISPLAY" -and -not [string]::IsNullOrWhiteSpace($_.DeviceName) })
+
+    $candidates = @()
+    foreach ($driver in $displayDrivers) {
+        $hardwareId = @($driver.HardwareID | Where-Object { $_ -match '^PCI\\' } | Select-Object -First 1)
+        if ($hardwareId.Count -eq 0) {
+            $hardwareId = @($driver.HardwareID | Select-Object -First 1)
+        }
+
+        if ([string]::IsNullOrWhiteSpace($hardwareId[0])) {
+            continue
+        }
+
+        $split = $hardwareId[0].Split('\')
+        if ($split.Count -lt 2) {
+            continue
+        }
+
+        $deviceId = $split[1]
+        if ([string]::IsNullOrWhiteSpace($deviceId)) {
+            continue
+        }
+
+        if ($partitionableGpuList | Where-Object { $_.Name -like "*$deviceId*" }) {
+            $candidates += [pscustomobject]@{
+                GPUName       = $driver.DeviceName
+                Manufacturer  = $driver.Manufacturer
+                DriverVersion = $driver.DriverVersion
+                DeviceId      = $deviceId
+            }
+        }
+    }
+
+    $candidates | Sort-Object GPUName -Unique
+}
+
+Function Select-PartitionableGpuName {
+    $build = [Environment]::OSVersion.Version.Build
+    if ($build -lt 22000) {
+        Write-Host "INFO   : Windows 10 requires GPUName=AUTO. Using AUTO."
+        return "AUTO"
+    }
+
+    try {
+        $candidates = @(Get-PartitionableGpuCandidates)
+    }
+    catch {
+        SmartExit -ExitReason "Failed to enumerate partitionable GPUs. Error: $($_.Exception.Message)"
+    }
+
+    if ($candidates.Count -lt 1) {
+        SmartExit -ExitReason "No partitionable GPUs detected."
+    }
+
+    Write-Host "Detected partitionable GPUs:"
+    for ($i = 0; $i -lt $candidates.Count; $i++) {
+        Write-Host ("[{0}] {1}" -f $i, $candidates[$i].GPUName)
+    }
+
+    if ($candidates.Count -eq 1) {
+        Write-Host ("INFO   : Selected GPU: {0}" -f $candidates[0].GPUName)
+        return $candidates[0].GPUName
+    }
+
+    $maxIndex = $candidates.Count - 1
+    $selectedIndex = $null
+    do {
+        $inputText = Read-Host -Prompt "Select GPU index (0-$maxIndex)"
+        $parsed = 0
+        $ok = [int]::TryParse($inputText, [ref]$parsed)
+        if ($ok -and $parsed -ge 0 -and $parsed -le $maxIndex) {
+            $selectedIndex = $parsed
+        }
+    } until ($selectedIndex -ne $null)
+
+    Write-Host ("INFO   : Selected GPU: {0}" -f $candidates[$selectedIndex].GPUName)
+    return $candidates[$selectedIndex].GPUName
+}
+
+if ($params.ContainsKey("GPUName") -and ($params.GPUName -is [string])) {
+    $gpuNameValue = $params.GPUName.Trim()
+    if ($gpuNameValue -match '^(?i)(SELECT|CHOOSE)$') {
+        $params.GPUName = Select-PartitionableGpuName
     }
 }
 

@@ -1,15 +1,28 @@
 <p align="center">
-  <h1 align="center">Enhanced-GPU-PV</h1>
+  <h1 align="center">Enhanced-GPU-PV-GUI</h1>
   <p align="center">
     A project dedicated to making
     <br />
-    GPU Paravirtualization on Windows Hyper-V easier!
-    <br />
-    Now with Sunshine and Virtual Display Driver support!
+    GPU Paravirtualization on Windows Hyper-V even easier! 
   </p>
 </p>
 
 <br>
+
+# Enhanced GPU-PV GUI
+
+The GUI does not edit the original project scripts. When you click **Create VM**, it creates a temporary generated script in `GUI\.generated` using the settings from the form, then runs that generated copy.
+
+While an operation is running, the GUI locks the settings controls and blocks window close requests until the script finishes. Runtime logs are written to `GUI\.generated\logs`.
+
+## Updated Files & Scripts
+
+- `MainWindow.xaml` - WPF layout.
+- `EnhancedGpuPv.Gui.ps1` - GUI launcher and script wrapper.
+- `.generated` - temporary scripts created at runtime.
+- `Start-GUI.bat` - Easier one click program launch  
+- Updated Sunshine to the latest version v2026.516.143833 
+
 
 ## ℹ About
 
@@ -25,7 +38,7 @@ Easy-GPU-PV does the following...
 
 The original project only allowed the user to set up Parsec and no alternative like Sunshine/Moonlight.   Furthermore it only added a virtual display to the VM when the user connected to it by relying on the fallback display of the Parsec App and its Privacy Mode.   
 This could lead to some [issues](https://github.com/jamesstringerparsec/Easy-GPU-PV/issues/190) and also meant that the screen was disconnected when no user was connected, causing problems for some people including me ;-). When connecting to the VM you were also logged out.  
-This updated version lets the user choose if he wants to install Sunshine or Parsec. It also adds a permanently connected virtual display to the VM, resolving the aforementioned issues. The user can also decide between two different Virtual Display solutions.  
+This updated version lets the user choose if he wants to install Sunshine or Parsec. It also adds a permanently connected virtual display to the VM, resolving the aforementioned issues. The user can also decide between to different Virtual Display solutions.  
 One [solution](https://github.com/timminator/ParsecVDA-Always-Connected) is based on the Parsec Virtual Display Driver. The other [solution](https://github.com/timminator/Virtual-Display-Driver) utilizes the Virtual Display Driver by [itsmikethetech](https://github.com/itsmikethetech) that i modified so that it can be installed remotely in this project.  
 Both solutions allow high resolutions and high refresh rates.  
 

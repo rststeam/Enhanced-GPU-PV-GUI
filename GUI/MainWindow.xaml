@@ -1,0 +1,452 @@
+﻿<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Enhanced GPU-PV GUI"
+    Height="820"
+    Width="1120"
+    MinHeight="720"
+    MinWidth="960"
+    WindowStartupLocation="CenterScreen"
+    WindowState="Maximized"
+    Background="#F3F5F4"
+    FontFamily="Segoe UI"
+    FontSize="13">
+    <Window.Resources>
+        <SolidColorBrush x:Key="AccentBrush" Color="#1F7A5B" />
+        <SolidColorBrush x:Key="AccentDarkBrush" Color="#155C45" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#D5DBD8" />
+
+        <Style TargetType="TextBox">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="PasswordBox">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="14,5" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentDarkBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style TargetType="GroupBox">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Margin" Value="0,0,12,12" />
+        </Style>
+
+        <Style TargetType="Label">
+            <Setter Property="Padding" Value="0,0,0,4" />
+            <Setter Property="Foreground" Value="#34413C" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="230" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,14">
+            <Border DockPanel.Dock="Right" MinWidth="170" MaxWidth="340" Height="36" Background="#E6ECE9" BorderBrush="#CED8D3" BorderThickness="1" CornerRadius="4" Padding="14,6" Margin="12,0,24,0">
+                <TextBlock Name="StatusText" Text="Ready" Foreground="#34413C" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+            </Border>
+            <StackPanel>
+                <TextBlock Text="Enhanced GPU-PV-GUI" FontSize="24" FontWeight="SemiBold" Foreground="#1F2D28" />
+                <TextBlock Text="Create and maintain Hyper-V GPU-PV VM's with ease" Foreground="#65736E" Margin="0,2,0,0" />
+                <Grid Name="ProgressPanel" Visibility="Collapsed" Margin="0,10,24,0" MaxWidth="720">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="190" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="52" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Name="ProgressText" Grid.Column="0" Text="Preparing..." Foreground="#34413C" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    <ProgressBar Name="OperationProgressBar" Grid.Column="1" Height="12" Minimum="0" Maximum="100" Value="0" VerticalAlignment="Center" />
+                    <TextBlock Name="ProgressPercentText" Grid.Column="2" Text="0%" Foreground="#65736E" VerticalAlignment="Center" TextAlignment="Right" />
+                </Grid>
+            </StackPanel>
+        </DockPanel>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="PreChecks">
+                <Grid Margin="4,14,4,4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,12,12">
+                        <Button Name="RunPreChecksButton" Content="Run PreChecks" Width="126" Style="{StaticResource PrimaryButton}" />
+                    </StackPanel>
+
+                    <GroupBox Header="Summary" Grid.Row="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Overall" />
+                            <TextBlock Name="PreCheckOverallStatusText" Grid.Row="0" Grid.Column="1" Text="Not run" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#65736E" />
+
+                            <Label Grid.Row="0" Grid.Column="2" Content="Last run" />
+                            <TextBlock Name="PreCheckLastRunText" Grid.Row="0" Grid.Column="3" Text="-" VerticalAlignment="Center" Foreground="#65736E" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="Warnings" Margin="0,10,0,0" />
+                            <TextBlock Name="PreCheckWarningsText" Grid.Row="1" Grid.Column="1" Text="-" VerticalAlignment="Center" Margin="0,10,0,0" Foreground="#65736E" />
+
+                            <Label Grid.Row="1" Grid.Column="2" Content="Blocking issues" Margin="0,10,0,0" />
+                            <TextBlock Name="PreCheckBlockingIssuesText" Grid.Row="1" Grid.Column="3" Text="-" VerticalAlignment="Center" Margin="0,10,0,0" Foreground="#65736E" />
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="Results" Grid.Row="2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="96" />
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Check" FontWeight="SemiBold" Foreground="#34413C" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Status" FontWeight="SemiBold" Foreground="#34413C" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Result" FontWeight="SemiBold" Foreground="#34413C" />
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Details" FontWeight="SemiBold" Foreground="#34413C" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Computer type" Margin="0,14,0,0" />
+                            <TextBlock Name="PreCheckComputerTypeStatusText" Grid.Row="1" Grid.Column="1" Text="-" Margin="0,14,0,0" FontWeight="SemiBold" Foreground="#65736E" />
+                            <TextBlock Name="PreCheckComputerTypeValueText" Grid.Row="1" Grid.Column="2" Text="-" Margin="0,14,0,0" Foreground="#1F2D28" />
+                            <TextBlock Name="PreCheckComputerTypeDetailText" Grid.Row="1" Grid.Column="3" Text="-" Margin="0,14,0,0" TextWrapping="Wrap" Foreground="#65736E" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Windows version" Margin="0,14,0,0" />
+                            <TextBlock Name="PreCheckWindowsStatusText" Grid.Row="2" Grid.Column="1" Text="-" Margin="0,14,0,0" FontWeight="SemiBold" Foreground="#65736E" />
+                            <TextBlock Name="PreCheckWindowsValueText" Grid.Row="2" Grid.Column="2" Text="-" Margin="0,14,0,0" Foreground="#1F2D28" />
+                            <TextBlock Name="PreCheckWindowsDetailText" Grid.Row="2" Grid.Column="3" Text="-" Margin="0,14,0,0" TextWrapping="Wrap" Foreground="#65736E" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Hyper-V" Margin="0,14,0,0" />
+                            <TextBlock Name="PreCheckHyperVStatusText" Grid.Row="3" Grid.Column="1" Text="-" Margin="0,14,0,0" FontWeight="SemiBold" Foreground="#65736E" />
+                            <TextBlock Name="PreCheckHyperVValueText" Grid.Row="3" Grid.Column="2" Text="-" Margin="0,14,0,0" Foreground="#1F2D28" />
+                            <TextBlock Name="PreCheckHyperVDetailText" Grid.Row="3" Grid.Column="3" Text="-" Margin="0,14,0,0" TextWrapping="Wrap" Foreground="#65736E" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="WSL" Margin="0,14,0,0" />
+                            <TextBlock Name="PreCheckWslStatusText" Grid.Row="4" Grid.Column="1" Text="-" Margin="0,14,0,0" FontWeight="SemiBold" Foreground="#65736E" />
+                            <TextBlock Name="PreCheckWslValueText" Grid.Row="4" Grid.Column="2" Text="-" Margin="0,14,0,0" Foreground="#1F2D28" />
+                            <TextBlock Name="PreCheckWslDetailText" Grid.Row="4" Grid.Column="3" Text="-" Margin="0,14,0,0" TextWrapping="Wrap" Foreground="#65736E" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Partitionable GPUs" Margin="0,14,0,0" />
+                            <TextBlock Name="PreCheckGpuStatusText" Grid.Row="5" Grid.Column="1" Text="-" Margin="0,14,0,0" FontWeight="SemiBold" Foreground="#65736E" />
+                            <TextBlock Name="PreCheckGpuValueText" Grid.Row="5" Grid.Column="2" Text="-" Margin="0,14,0,0" Foreground="#1F2D28" />
+                            <TextBlock Name="PreCheckGpuDetailText" Grid.Row="5" Grid.Column="3" Text="-" Margin="0,14,0,0" TextWrapping="Wrap" Foreground="#65736E" />
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Create VM">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="4,14,4,4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,12,12">
+                            <Button Name="RefreshHostDataButton" Content="Refresh Host Data" Width="148" Margin="0,0,8,0" />
+                            <Button Name="CreateVmButton" Content="Create VM" Width="112" Style="{StaticResource PrimaryButton}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0">
+                            <GroupBox Header="VM">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="96" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="VM name" />
+                                    <TextBox Name="VmNameText" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="GPUPV" />
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Windows ISO" Margin="0,10,0,0" />
+                                    <TextBox Name="IsoPathText" Grid.Row="1" Grid.Column="1" Margin="0,10,8,0" />
+                                    <Button Name="BrowseIsoButton" Grid.Row="1" Grid.Column="2" Content="Browse" Margin="0,10,0,0" />
+
+                                    <Label Grid.Row="2" Grid.Column="0" Content="VHD folder" Margin="0,10,0,0" />
+                                    <TextBox Name="VhdPathText" Grid.Row="2" Grid.Column="1" Margin="0,10,8,0" Text="C:\" />
+                                    <Button Name="BrowseVhdButton" Grid.Row="2" Grid.Column="2" Content="Browse" Margin="0,10,0,0" />
+
+                                    <Label Grid.Row="3" Grid.Column="0" Content="Network switch" Margin="0,10,0,0" />
+                                    <ComboBox Name="NetworkSwitchCombo" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,10,0,0" IsEditable="False" />
+
+                                    <Label Grid.Row="4" Grid.Column="0" Content="Edition index" Margin="0,10,0,0" />
+                                    <TextBox Name="EditionText" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,10,0,0" Text="6" />
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Header="Resources">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Disk size GB" />
+                                    <TextBox Name="DiskSizeText" Grid.Row="0" Grid.Column="1" Text="150" />
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Memory GB" Margin="0,10,0,0" />
+                                    <TextBox Name="MemoryText" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" Text="8" />
+
+                                    <Label Grid.Row="2" Grid.Column="0" Content="CPU cores" Margin="0,10,0,0" />
+                                    <TextBox Name="CpuCoresText" Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" Text="4" />
+
+                                    <Label Grid.Row="3" Grid.Column="0" Content="GPU allocation" Margin="0,12,0,0" />
+                                    <DockPanel Grid.Row="3" Grid.Column="1" Margin="0,12,0,0">
+                                        <TextBlock Name="GpuAllocationValueText" DockPanel.Dock="Right" Text="50%" Width="46" TextAlignment="Right" VerticalAlignment="Center" />
+                                        <Slider Name="GpuAllocationSlider" Minimum="5" Maximum="100" Value="50" TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Header="GPU">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="GPU" />
+                                    <ComboBox Name="GpuCombo" Grid.Row="0" Grid.Column="1" IsEditable="False" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="#65736E" Text="Use AUTO for Windows 10 hosts or when you want the script to pick the first partitionable GPU." />
+                                </Grid>
+                            </GroupBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1">
+                            <GroupBox Header="Remote Access">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Install profile" />
+                                    <ComboBox Name="InstallProfileCombo" Grid.Row="0" Grid.Column="1" />
+
+                                    <TextBlock Name="InstallProfileDetailText" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="#65736E" />
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Header="Guest Account">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Username" />
+                                    <TextBox Name="UsernameText" Grid.Row="0" Grid.Column="1" Text="GPUVM" />
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Password" Margin="0,10,0,0" />
+                                    <PasswordBox Name="PasswordBox" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" />
+
+                                    <CheckBox Name="AutologonCheck" Grid.Row="2" Grid.Column="1" Content="Autologon" Margin="0,12,0,0" IsChecked="True" />
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Header="Locale">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Language tag" />
+                                    <TextBox Name="LanguageText" Grid.Row="0" Grid.Column="1" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,6,0,0" TextWrapping="Wrap" Foreground="#65736E" Text="Optional. Affects keyboard layout and minor setup settings only; Windows display language comes from the ISO. Leave empty for ISO default. Examples: en-US, de-DE, fr-FR, hr-HR." />
+
+                                    <Label Grid.Row="2" Grid.Column="0" Content="Timezone" Margin="0,14,0,0" />
+                                    <TextBox Name="TimezoneText" Grid.Row="2" Grid.Column="1" Margin="0,14,0,0" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,6,0,0" TextWrapping="Wrap" Foreground="#65736E" Text="Optional. Leave empty for the default Windows/ISO timezone. Examples: Pacific Standard Time, Eastern Standard Time, Central European Standard Time." />
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Header="Parsec Teams">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Team ID" />
+                                    <TextBox Name="TeamIdText" Grid.Row="0" Grid.Column="1" />
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Secret key" Margin="0,10,0,0" />
+                                    <PasswordBox Name="TeamKeyBox" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" />
+                                </Grid>
+                            </GroupBox>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Maintenance">
+                <Grid Margin="4,14,4,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="520" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <GroupBox Header="Update VM GPU Driver">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Content="VM name" />
+                                <ComboBox Name="UpdateVmNameText" Grid.Row="0" Grid.Column="1" IsEditable="False" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Content="GPU" Margin="0,10,0,0" />
+                                <ComboBox Name="UpdateGpuCombo" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" IsEditable="False" />
+
+                                <Button Name="UpdateDriverButton" Grid.Row="2" Grid.Column="1" Content="Update Driver Files" Width="160" HorizontalAlignment="Left" Margin="0,14,0,0" Style="{StaticResource PrimaryButton}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Nested Virtualization">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Content="VM name" />
+                                <ComboBox Name="NestedVmNameText" Grid.Row="0" Grid.Column="1" IsEditable="False" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="#65736E" Text="Turns off the selected VM if needed, then runs Set-VMProcessor with virtualization extensions enabled. The VM will remain powered off after this operation." />
+
+                                <Button Name="EnableNestedVirtualizationButton" Grid.Row="2" Grid.Column="1" Content="Enable Nested Virtualization" Width="220" HorizontalAlignment="Left" Margin="0,14,0,0" Style="{StaticResource PrimaryButton}" />
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="8,10,0,0">
+                        <Button Name="RefreshMaintenanceVmListButton" Content="Refresh VM List" Width="140" HorizontalAlignment="Left" Margin="0,0,0,12" />
+                        <TextBlock TextWrapping="Wrap" Foreground="#65736E" Text="Maintenance actions can stop the selected VM while they work. Save any guest work before running driver updates or enabling nested virtualization." />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <GroupBox Grid.Row="2" Header="Log" Margin="0,12,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBox Name="LogTextBox" Grid.Row="0" FontFamily="Consolas" FontSize="12" IsReadOnly="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Background="#101614" Foreground="#D9E5DF" BorderBrush="#101614" />
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                    <Button Name="OpenGeneratedFolderButton" Content="Open Generated Folder" Width="170" Margin="0,0,8,0" />
+                    <Button Name="ClearLogButton" Content="Clear Log" Width="96" />
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>
+
+
