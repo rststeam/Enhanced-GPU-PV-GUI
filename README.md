@@ -12,6 +12,7 @@
 
 
 The GUI does not edit the original project scripts. When you click **Create VM**, it creates a temporary generated script in `GUI\.generated` using the settings from the form, then runs that generated copy.
+- Double click on `Start-GUI.bat` to run the GUI console
 
 While an operation is running, the GUI locks the settings controls and blocks window close requests until the script finishes. Runtime logs are written to `GUI\.generated\logs`.
 
