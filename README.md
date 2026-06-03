@@ -23,11 +23,13 @@ While an operation is running, the GUI locks the settings controls and blocks wi
 - `EnhancedGpuPv.Gui.ps1` - GUI launcher and script wrapper.
 - `.generated` - temporary scripts created at runtime.
 - `Start-GUI.bat` - Easier one click program launch  
-- Updated Sunshine to the latest version v2026.516.143833 
+- Updated Sunshine to the latest version v2026.516.143833
 
-![GUI PreChecks](Images/GUIinterface.png.png)
-![GUI Create](Images/GUIinterface1.png.png)
-![GUI Maintenance](Images/GUIinterface2.png.png)
+<p align="center">
+![GUI PreChecks](Images/GUIinterface.png)
+![GUI Create](Images/GUIinterface1.png)
+![GUI Maintenance](Images/GUIinterface2.png)
+</p>
 
 ## ℹ About
 
