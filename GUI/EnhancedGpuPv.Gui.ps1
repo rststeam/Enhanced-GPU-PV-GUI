@@ -522,6 +522,7 @@ function ConvertTo-ParamsBlock {
     $lines.Add("    ParsecVDA = $(ConvertTo-BooleanLiteral $Config.ParsecVDA)")
     $lines.Add("    Sunshine = $(ConvertTo-BooleanLiteral $Config.Sunshine)")
     $lines.Add("    VirtualDisplayDriver = $(ConvertTo-BooleanLiteral $Config.VirtualDisplayDriver)")
+    $lines.Add("    VirtualDisplayDriverBeta = $(ConvertTo-BooleanLiteral $Config.VirtualDisplayDriverBeta)")
     $lines.Add("    Team_ID = $(ConvertTo-PowerShellStringLiteral $Config.Team_ID)")
     $lines.Add("    Key = $(ConvertTo-PowerShellStringLiteral $Config.Key)")
     $lines.Add("    Username = $(ConvertTo-PowerShellStringLiteral $Config.Username)")
@@ -580,6 +581,7 @@ function Get-CreateConfig {
     $sunshine = $false
     $parsecVda = $false
     $virtualDisplayDriver = $false
+    $virtualDisplayDriverBeta = $false
 
     switch ($installProfile) {
         "GPU-PV only" {
@@ -596,6 +598,10 @@ function Get-CreateConfig {
             $sunshine = $true
             $virtualDisplayDriver = $true
         }
+        "Sunshine + Virtual Display Driver Beta" {
+            $sunshine = $true
+            $virtualDisplayDriverBeta = $true
+        }
         "Sunshine + ParsecVDA" {
             $sunshine = $true
             $parsecVda = $true
@@ -604,16 +610,19 @@ function Get-CreateConfig {
             $errors.Add("Choose a valid install profile.")
         }
     }
-
-    $countTrue = @($parsec, $sunshine, $parsecVda, $virtualDisplayDriver | Where-Object { $_ }).Count
-    if ($countTrue -ne 0 -and $countTrue -ne 2) {
+    $streamerCount = @($parsec, $sunshine | Where-Object { $_ }).Count
+    $displayCount = @($parsecVda, $virtualDisplayDriver, $virtualDisplayDriverBeta | Where-Object { $_ }).Count
+    if (-not (($streamerCount -eq 0 -and $displayCount -eq 0) -or ($streamerCount -eq 1 -and $displayCount -eq 1))) {
         $errors.Add("Choose either GPU-PV only, or one streamer with one display driver.")
     }
     if ($parsec -and $sunshine) {
         $errors.Add("Choose only one streamer.")
     }
-    if ($parsecVda -and $virtualDisplayDriver) {
+    if ((@($parsecVda, $virtualDisplayDriver, $virtualDisplayDriverBeta | Where-Object { $_ }).Count) -gt 1) {
         $errors.Add("Choose only one display driver.")
+    }
+    if ($virtualDisplayDriverBeta -and -not $sunshine) {
+        $errors.Add("Virtual Display Driver Beta test profile is currently supported with Sunshine only.")
     }
 
     if ($errors.Count -gt 0) {
@@ -636,6 +645,7 @@ function Get-CreateConfig {
         ParsecVDA = $parsecVda
         Sunshine = $sunshine
         VirtualDisplayDriver = $virtualDisplayDriver
+        VirtualDisplayDriverBeta = $virtualDisplayDriverBeta
         Team_ID = $script:Ui.TeamIdText.Text.Trim()
         Key = $script:Ui.TeamKeyBox.Password
         Username = $username
@@ -658,10 +668,12 @@ function Test-CreateVmAssetFiles {
         "User\Installation with Sunshine + ParsecVDA.ps1",
         "User\Installation with Sunshine + VirtualDisplayDriverHDR.ps1",
         "User\Installation with Sunshine + VirtualDisplayDriver.ps1",
+        "User\Installation with Sunshine + VirtualDisplayDriverBeta.ps1",
         "User\Installation just GPU-PV.ps1",
         "VMScripts\VBCableInstall.ps1",
         "VMScripts\ParsecVDAInstall.ps1",
         "VMScripts\VirtualDisplayDriverInstall.ps1",
+        "VMScripts\VirtualDisplayDriverInstallBeta.ps1",
         "VMScripts\VirtualDisplayDriverHDRInstall.ps1",
         "VMScripts\Switch Display to ParsecVDA.bat",
         "VMScripts\Switch Display to Virtual Display.bat",
@@ -1699,6 +1711,9 @@ function Update-InstallProfileDetail {
         "Sunshine + Virtual Display Driver" {
             $script:Ui.InstallProfileDetailText.Text = "Installs Sunshine for Moonlight streaming and Virtual Display Driver as the display solution. HDR support depends on the Windows ISO/build used."
         }
+        "Sunshine + Virtual Display Driver Beta" {
+            $script:Ui.InstallProfileDetailText.Text = "Installs Sunshine for Moonlight streaming and the beta Virtual Display Driver installer. Use this for testing the new driver-only installer path."
+        }
         "Sunshine + ParsecVDA" {
             $script:Ui.InstallProfileDetailText.Text = "Installs Sunshine for Moonlight streaming and ParsecVDA as the always-connected virtual display solution."
         }
@@ -1714,6 +1729,7 @@ $script:Ui.InstallProfileCombo.Items.Clear()
     "Parsec + ParsecVDA",
     "Parsec + Virtual Display Driver",
     "Sunshine + Virtual Display Driver",
+    "Sunshine + Virtual Display Driver Beta",
     "Sunshine + ParsecVDA"
 ) | ForEach-Object { [void]$script:Ui.InstallProfileCombo.Items.Add($_) }
 $script:Ui.InstallProfileCombo.SelectedItem = "Sunshine + Virtual Display Driver"

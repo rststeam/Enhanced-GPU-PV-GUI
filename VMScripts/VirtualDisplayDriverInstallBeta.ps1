@@ -1,15 +1,50 @@
-# Run this script in a powershell with administrator rights (run as administrator)
+# Run this script in a PowerShell session with Administrator rights, or let it self-elevate.
 [CmdletBinding()]
 param(
     # Latest stable version of NefCon installer
     [Parameter(Mandatory=$false)]
     [string]$NefConURL = "https://github.com/nefarius/nefcon/releases/download/v1.14.0/nefcon_v1.14.0.zip",
-    
+
     # Latest stable version of VDD driver only
     [Parameter(Mandatory=$false)]
     [string]$DriverURL = "https://github.com/VirtualDrivers/Virtual-Display-Driver/releases/download/25.7.23/VirtualDisplayDriver-x86.Driver.Only.zip"
 );
 
+
+$ErrorActionPreference = "Stop"
+
+function Test-IsAdministrator {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+}
+
+if (-not (Test-IsAdministrator)) {
+    $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$PSCommandPath`"")
+    foreach ($key in $PSBoundParameters.Keys) {
+        $arguments += "-$key"
+        $arguments += "`"$($PSBoundParameters[$key])`""
+    }
+    $process = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -Verb RunAs -Wait -PassThru
+    exit $process.ExitCode
+}
+
+function Remove-InstallScheduledTask {
+    param([string]$TaskName)
+
+    try {
+        Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Stop
+    }
+    catch {
+    }
+}
+# Variables
+$taskName = "Install VirtualDisplayDriverBeta"
+$scriptFolder = (Get-Item -Path $MyInvocation.MyCommand.Definition).DirectoryName
+$desktopPath = [System.Environment]::GetFolderPath('Desktop')
+$vbScriptPath = "$scriptFolder\SwitchDisplayVDD.vbs"
+$iconPath = "$scriptFolder\VirtualDisplayDriver.ico"
+$shortcutPath = "$desktopPath\Switch Display to Virtual Display.lnk"
 # Create temp directory
 $tempDir = Join-Path $env:TEMP "VDDInstall";
 New-Item -ItemType Directory -Path $tempDir -Force | Out-Null;
@@ -54,4 +89,16 @@ Start-Sleep -Seconds 10;
 Pop-Location;
 
 Write-Host "Driver installation completed." -ForegroundColor Green;
+
+# Create the desktop shortcut used to switch to the Virtual Display Driver
+Write-Host "Creating Virtual Display Driver desktop shortcut..." -ForegroundColor Cyan;
+$WScriptShell = New-Object -ComObject WScript.Shell;
+$shortcut = $WScriptShell.CreateShortcut($shortcutPath);
+$shortcut.TargetPath = $vbScriptPath;
+$shortcut.IconLocation = $iconPath;
+$shortcut.Save();
+
+# Remove the scheduled task to prevent further executions
+Remove-InstallScheduledTask -TaskName $taskName;
+
 Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue;

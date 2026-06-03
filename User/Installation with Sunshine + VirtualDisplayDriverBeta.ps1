@@ -1,4 +1,4 @@
-﻿param(
+param(
 $team_id,
 $key
 )
@@ -79,13 +79,13 @@ VBCableInstallSetupScheduledTask
 
 
 # Function for Virtual Display Driver
-Function VirtualDisplayDriverHDRInstallSetupScheduledTask {
+Function VirtualDisplayDriverBetaInstallSetupScheduledTask {
 $XML = @"
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>Install VirtualDisplayDriverHDR</Description>
-    <URI>\Install VirtualDisplayDriverHDR</URI>
+    <Description>Install VirtualDisplayDriverBeta</Description>
+    <URI>\Install VirtualDisplayDriverBeta</URI>
   </RegistrationInfo>
   <Triggers>
     <LogonTrigger>
@@ -123,22 +123,22 @@ $XML = @"
   <Actions Context="Author">
     <Exec>
       <Command>C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe</Command>
-      <Arguments>-file %programdata%\Easy-GPU-P\VirtualDisplayDriverHDRInstall.ps1</Arguments>
+      <Arguments>-ExecutionPolicy Bypass -File %programdata%\Easy-GPU-P\VirtualDisplayDriverInstallBeta.ps1</Arguments>
     </Exec>
   </Actions>
 </Task>
 "@
 
     try {
-        Get-ScheduledTask -TaskName "Install VirtualDisplayDriverHDR" -ErrorAction Stop | Out-Null
-        Unregister-ScheduledTask -TaskName "Install VirtualDisplayDriverHDR" -Confirm:$false
+        Get-ScheduledTask -TaskName "Install VirtualDisplayDriverBeta" -ErrorAction Stop | Out-Null
+        Unregister-ScheduledTask -TaskName "Install VirtualDisplayDriverBeta" -Confirm:$false
     } catch {}
-    $action = New-ScheduledTaskAction -Execute 'C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe' -Argument '-file %programdata%\Easy-GPU-P\VirtualDisplayDriverHDRInstall.ps1'
+    $action = New-ScheduledTaskAction -Execute 'C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe' -Argument '-ExecutionPolicy Bypass -File %programdata%\Easy-GPU-P\VirtualDisplayDriverInstallBeta.ps1'
     $trigger =  New-ScheduledTaskTrigger -AtStartup
-    Register-ScheduledTask -XML $XML -TaskName "Install VirtualDisplayDriverHDR" | Out-Null
+    Register-ScheduledTask -XML $XML -TaskName "Install VirtualDisplayDriverBeta" | Out-Null
     }
 
-VirtualDisplayDriverHDRInstallSetupScheduledTask
+VirtualDisplayDriverBetaInstallSetupScheduledTask
 
 
 # Function for disabling One Drive Autostart
@@ -205,7 +205,7 @@ OneDriveDisableScheduledTask
 
 
 Start-ScheduledTask -TaskName "Install VB Cable"
-Start-ScheduledTask -TaskName "Install VirtualDisplayDriverHDR"
+Start-ScheduledTask -TaskName "Install VirtualDisplayDriverBeta"
 Start-ScheduledTask -TaskName "DisableOneDriveAutostart"
 
 

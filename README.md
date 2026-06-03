@@ -4,12 +4,12 @@
     A project dedicated to making
     <br />
     GPU Paravirtualization on Windows Hyper-V even easier! 
+    Now with latest Sunshine and latest Beta Virtual Display Driver support!
   </p>
 </p>
 
 <br>
 
-# Enhanced GPU-PV GUI
 
 The GUI does not edit the original project scripts. When you click **Create VM**, it creates a temporary generated script in `GUI\.generated` using the settings from the form, then runs that generated copy.
 

@@ -1,4 +1,4 @@
-﻿#powershell.exe -ExecutionPolicy Bypass -File "C:\Users\Caki\Desktop\Enhanced-GPU-PV\Enhanced-GPU-PV-main\CopyFilesToVM.ps1"
+#powershell.exe -ExecutionPolicy Bypass -File "C:\Users\Caki\Desktop\Enhanced-GPU-PV\Enhanced-GPU-PV-main\CopyFilesToVM.ps1"
 
 $params = @{
     VMName = "GPUPVECH"
@@ -16,24 +16,26 @@ $params = @{
     GPUName = "SELECT"
     GPUResourceAllocationPercentage = 50
 
-    # Valid combinations are: 
-    # 1. All four false (just a machine with GPU-PV support) 
+    # Valid combinations are:
+    # 1. All four false (just a machine with GPU-PV support)
     # 2. Parsec + ParsecVDA
-    # 3. Parsec + Virtual-Display-Driver (with or without HDR support depending on the build version of your specified ISO) 
+    # 3. Parsec + Virtual-Display-Driver (with or without HDR support depending on the build version of your specified ISO)
     # 4. Sunshine + Virtual-Display-Driver (with or without HDR support depending on the build version of your specified ISO)
-    # 5. Sunshine + ParsecVDA
+    # 5. Sunshine + Virtual-Display-Driver Beta
+    # 6. Sunshine + ParsecVDA
     Parsec = $false
     ParsecVDA = $false
     Sunshine = $true
     VirtualDisplayDriver = $true
 
+    VirtualDisplayDriverBeta = $false
     Team_ID = ""
     Key = ""
     Username = "Test"
     Password = "Test!!"
     Autologon = "true"
     # Only affects keyboard layout and other minor settings, language is predetermined by the specified ISO
-    # If you want to use the default settings by your ISO leave this parameter empty like this: ""  
+    # If you want to use the default settings by your ISO leave this parameter empty like this: ""
     # To find languages/region tags use the following link: https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/available-language-packs-for-windows?view=windows-11
     Language = ""
     # If you want to use the default setting by your ISO leave this parameter empty like this: ""
@@ -43,9 +45,9 @@ $params = @{
 
 Import-Module $PSSCriptRoot\Add-VMGpuPartitionAdapterFiles.psm1
 
-Function Is-Administrator {  
+Function Is-Administrator {
     $CurrentUser = [Security.Principal.WindowsIdentity]::GetCurrent();
-    (New-Object Security.Principal.WindowsPrincipal $CurrentUser).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
+    (New-Object Security.Principal.WindowsPrincipal $CurrentUser).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
 Function Dismount-ISO {
@@ -77,7 +79,7 @@ param (
             $DriveLetter = "$(Get-NewDriveLetter)" +  ":"
             Get-WmiObject -Class Win32_volume | Where-Object {$_.Label -eq "CCCOMA_X64FRE_EN-US_DV9"} | Set-WmiInstance -Arguments @{DriveLetter="$driveletter"}
             }
-        Start-Sleep -s 1 
+        Start-Sleep -s 1
         $delay++
         }
     Until (($mountResult | Get-Volume).DriveLetter -ne $NULL)
@@ -228,7 +230,7 @@ else {
     if (!(Test-Path $("$ISODriveLetter"+":\Sources\install.wim"))) {
         $ExitReason += "This ISO is invalid, please check readme for ISO downloading instructions."
         }
-    Dismount-ISO -SourcePath $params.SourcePath 
+    Dismount-ISO -SourcePath $params.SourcePath
     }
 if ($params.Username -eq $params.VMName ) {
     $ExitReason += "Username cannot be the same as VMName."
@@ -247,13 +249,22 @@ $A = $params.Parsec
 $B = $params.ParsecVDA
 $C = $params.Sunshine
 $D = $params.VirtualDisplayDriver
+$E = $params.VirtualDisplayDriverBeta
 
-$countTrue = ($A, $B, $C, $D | Where-Object { $_ }).Count
+$streamerCount = ($A, $C | Where-Object { $_ }).Count
+$displayCount = ($B, $D, $E | Where-Object { $_ }).Count
 
-if (($countTrue -ne 0 -and $countTrue -ne 2) -or
-    ($A -and $C) -or
-    ($B -and $D)) {
-    $ExitReason += "Invalid combination of Parsec, ParsecVDA, Sunshine, and VirtualDisplayDriver. Either all must be false, or exactly two must be true, excluding the cases where both Parsec and Sunshine are true, or both ParsecVDA and VirtualDisplayDriver are true."
+if (-not (($streamerCount -eq 0 -and $displayCount -eq 0) -or ($streamerCount -eq 1 -and $displayCount -eq 1))) {
+    $ExitReason += "Invalid combination. Choose either GPU-PV only, or exactly one streamer with exactly one display driver."
+}
+if ($A -and $C) {
+    $ExitReason += "Choose either Parsec or Sunshine, not both."
+}
+if (($B, $D, $E | Where-Object { $_ }).Count -gt 1) {
+    $ExitReason += "Choose only one display driver option."
+}
+if ($E -and -not $C) {
+    $ExitReason += "Virtual Display Driver Beta test profile is currently supported with Sunshine only."
 }
 If ($ExitReason.Count -gt 0) {
     Write-Host "Script failed params check due to the following reasons:" -ForegroundColor DarkYellow
@@ -284,7 +295,7 @@ param (
     try {
         # Path to the WIM file
         $wimPath = "${DriveLetter}:\sources\install.wim"
-   
+
         # Mount the WIM file
         Write-Host "INFO   : Mounting WIM file..."
         dism /Mount-Wim /WimFile:$wimPath /index:$ImageIndex /MountDir:$mountPath -readonly | Out-Null
@@ -326,23 +337,23 @@ param (
     }
 
     $buildVersion = Get-BuildVersionSimple -SourcePath $SourcePath -ImageIndex $ImageIndex
-    
+
     # Define version constants
     $win10_22H2_version = [version]"10.0.19045"
     $win2004 = [version]"10.0.19041"
-    
+
     # Check if build version is between 19041 and 19045
     if ($buildVersion -lt $win10_22H2_version -and $buildVersion -ge $win2004) {
         Write-Host "INFO   : Checking ParsecVDA compatibility under specified Windows 10 ISO. This could take awhile..."
         $buildVersion = Get-BuildVersionExact -Driveletter $Driveletter -ImageIndex $ImageIndex
-        
+
         # Define version constants
         $win10_21H2_int = "19044"
-       
+
         # Check if build version is less than Windows 10 21H2 when the ParsecVDA is selected
         if ($buildVersion -lt $win10_21H2_int) {
             throw "Specified Windows image does not meet the requirements to install the ParsecVDA."
-        } 
+        }
     } elseif ($buildVersion -ge $win10_22H2_version) {
         return
     } else {
@@ -363,7 +374,7 @@ param (
 
     # Define version constants
     $win11_23H2 = [version]"10.0.22621"
-       
+
     # Check if build version is greater than or equal to Windows 11 23H2
     if ($buildVersion -ge $win11_23H2 -and $VirtualDisplayDriver) {
         $withHDR = $true
@@ -380,12 +391,14 @@ param(
 [bool]$ParsecVDA,
 [bool]$Sunshine,
 [bool]$VirtualDisplayDriver,
+
+[bool]$VirtualDisplayDriverBeta,
 [string]$Team_ID,
 [string]$Key
 )
     $new = @()
 
-    $content = get-content "$PSScriptRoot\user\psscripts.ini" 
+    $content = get-content "$PSScriptRoot\user\psscripts.ini"
 
     foreach ($line in $content) {
         if ($line -like "0Parameters="){
@@ -402,6 +415,7 @@ param(
     Copy-Item -Path $psscriptroot\VMScripts\VBCableInstall.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
     Copy-Item -Path $psscriptroot\VMScripts\ParsecVDAInstall.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
     Copy-Item -Path $psscriptroot\VMScripts\VirtualDisplayDriverInstall.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
+    Copy-Item -Path $psscriptroot\VMScripts\VirtualDisplayDriverInstallBeta.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
     Copy-Item -Path $psscriptroot\VMScripts\VirtualDisplayDriverHDRInstall.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
     Copy-Item -Path "$psscriptroot\VMScripts\Switch Display to ParsecVDA.bat" -Destination $DriveLetter\ProgramData\Easy-GPU-P
     Copy-Item -Path "$psscriptroot\VMScripts\Switch Display to Virtual Display.bat" -Destination $DriveLetter\ProgramData\Easy-GPU-P
@@ -413,9 +427,9 @@ param(
     Copy-Item -Path $psscriptroot\VMScripts\DisableOneDriveAutostart.ps1 -Destination $DriveLetter\ProgramData\Easy-GPU-P
     Copy-Item -Path $psscriptroot\gpt.ini -Destination $DriveLetter\Windows\system32\GroupPolicy
     Copy-Item -Path $psscriptroot\User\psscripts.ini -Destination $DriveLetter\Windows\system32\GroupPolicy\User\Scripts
-    
-    $withHDR = Check-BuildVersionforVDD -SourcePath $SourcePath -ImageIndex $ImageIndex -VirtualDisplayDriver $VirtualDisplayDriver
-   
+
+    $withHDR = Check-BuildVersionforVDD -SourcePath $SourcePath -ImageIndex $ImageIndex -VirtualDisplayDriver ($VirtualDisplayDriver -and -not $VirtualDisplayDriverBeta)
+
     # Check which streaming software and Virtual Display was chosen and copy the appropriate script
     if ($Parsec -and $ParsecVDA) {
         Copy-Item -Path "$PSScriptRoot\User\Installation with Parsec + ParsecVDA.ps1" -Destination "$DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon\Install.ps1"
@@ -425,6 +439,8 @@ param(
         Copy-Item -Path "$PSScriptRoot\User\Installation with Parsec + VirtualDisplayDriver.ps1" -Destination "$DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon\Install.ps1"
     } elseif ($Sunshine -and $ParsecVDA) {
         Copy-Item -Path "$PSScriptRoot\User\Installation with Sunshine + ParsecVDA.ps1" -Destination "$DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon\Install.ps1"
+    } elseif ($Sunshine -and $VirtualDisplayDriverBeta) {
+        Copy-Item -Path "$PSScriptRoot\User\Installation with Sunshine + VirtualDisplayDriverBeta.ps1" -Destination "$DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon\Install.ps1"
     } elseif ($Sunshine -and $VirtualDisplayDriver -and $withHDR) {
         Copy-Item -Path "$PSScriptRoot\User\Installation with Sunshine + VirtualDisplayDriverHDR.ps1" -Destination "$DriveLetter\Windows\system32\GroupPolicy\User\Scripts\Logon\Install.ps1"
     } elseif ($Sunshine -and $VirtualDisplayDriver) {
@@ -645,6 +661,12 @@ Function Convert-WindowsImage {
         [bool]
         [ValidateNotNullOrEmpty()]
         [bool]$VirtualDisplayDriver,
+
+
+        [Parameter(ParameterSetName="SRC")]
+        [bool]
+        [ValidateNotNullOrEmpty()]
+        [bool]$VirtualDisplayDriverBeta,
 
         [Parameter(ParameterSetName="SRC")]
         [Alias("GPU")]
@@ -1410,7 +1432,7 @@ You can use the fields below to configure the VHD or VHDX that you want to creat
     Process
     {
         Write-Host $header
-        
+
         $disk           = $null
         $openWim        = $null
         $openIso        = $null
@@ -2775,7 +2797,7 @@ You can use the fields below to configure the VHD or VHDX that you want to creat
             }
 
             Write-W2VInfo "Setting up programs to install at boot"
-            Setup-ParsecInstall -DriveLetter $WindowsDrive -Parsec $Parsec -ParsecVDA $ParsecVDA -Sunshine $Sunshine -VirtualDisplayDriver $VirtualDisplayDriver -Team_ID $Team_ID -Key $Key
+            Setup-ParsecInstall -DriveLetter $WindowsDrive -Parsec $Parsec -ParsecVDA $ParsecVDA -Sunshine $Sunshine -VirtualDisplayDriver $VirtualDisplayDriver -VirtualDisplayDriverBeta $VirtualDisplayDriverBeta -Team_ID $Team_ID -Key $Key
 
             if ($DiskLayout -eq "UEFI")
             {
@@ -4561,8 +4583,8 @@ VirtualHardDisk
 }
 "@
     #ifdef for Powershell V7 or greater which looks for assemblies in same path as powershell dll path
-    if ($PSVersionTable.psversion.Major -ge 7){        
-    Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue 
+    if ($PSVersionTable.psversion.Major -ge 7){
+    Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue
     }
     else {
     Add-Type -TypeDefinition $code -ReferencedAssemblies "System.Xml","System.Linq","System.Xml.Linq" -ErrorAction SilentlyContinue
@@ -4625,7 +4647,7 @@ param(
 [string]$GPUName,
 [decimal]$GPUResourceAllocationPercentage = 100
 )
-    $PartitionableGPUList = Get-WmiObject -Class "Msvm_PartitionableGpu" -ComputerName $env:COMPUTERNAME -Namespace "ROOT\virtualization\v2" 
+    $PartitionableGPUList = Get-WmiObject -Class "Msvm_PartitionableGpu" -ComputerName $env:COMPUTERNAME -Namespace "ROOT\virtualization\v2"
     if ($GPUName -eq "AUTO") {
         $DevicePathName = $PartitionableGPUList.Name[0]
         Add-VMGpuPartitionAdapter -VMName $VMName
@@ -4664,6 +4686,8 @@ param(
 [bool]$ParsecVDA,
 [bool]$Sunshine,
 [bool]$VirtualDisplayDriver,
+
+[bool]$VirtualDisplayDriverBeta,
 [string]$Team_ID,
 [string]$Key,
 [string]$username,
@@ -4682,12 +4706,12 @@ param(
         SmartExit -ExitReason "Virtual Machine Disk already exists at $vhdPath, please delete existing VHDX or change VMName"
         }
     Modify-AutoUnattend -username "$username" -password "$password" -autologon $autologon -hostname $VMName -language "$language" -timezone "$timezone" -UnattendPath $UnattendPath
-    $MaxAvailableVersion = (Get-VMHostSupportedVersion).Version | Where-Object {$_.Major -lt 254}| Select-Object -Last 1 
-    Convert-WindowsImage -SourcePath $SourcePath -ISODriveLetter $DriveLetter -Edition $Edition -VHDFormat $Vhdformat -VHDPath $VhdPath -DiskLayout $DiskLayout -UnattendPath $UnattendPath -GPUName $GPUName -Parsec $Parsec -ParsecVDA $ParsecVDA -Sunshine $Sunshine -VirtualDisplayDriver $VirtualDisplayDriver -Team_ID $Team_ID -Key $Key -SizeBytes $SizeBytes| Out-Null
+    $MaxAvailableVersion = (Get-VMHostSupportedVersion).Version | Where-Object {$_.Major -lt 254}| Select-Object -Last 1
+    Convert-WindowsImage -SourcePath $SourcePath -ISODriveLetter $DriveLetter -Edition $Edition -VHDFormat $Vhdformat -VHDPath $VhdPath -DiskLayout $DiskLayout -UnattendPath $UnattendPath -GPUName $GPUName -Parsec $Parsec -ParsecVDA $ParsecVDA -Sunshine $Sunshine -VirtualDisplayDriver $VirtualDisplayDriver -VirtualDisplayDriverBeta $VirtualDisplayDriverBeta -Team_ID $Team_ID -Key $Key -SizeBytes $SizeBytes| Out-Null
     if (Test-Path $vhdPath) {
         New-VM -Name $VMName -MemoryStartupBytes $MemoryAmount -VHDPath $VhdPath -Generation 2 -SwitchName $NetworkSwitch -Version $MaxAvailableVersion | Out-Null
         Set-VM -Name $VMName -ProcessorCount $CPUCores -CheckpointType Disabled -LowMemoryMappedIoSpace 1GB -HighMemoryMappedIoSpace 32GB -GuestControlledCacheTypes $true -AutomaticStopAction Save
-        Set-VMMemory -VMName $VMName -DynamicMemoryEnabled $false 
+        Set-VMMemory -VMName $VMName -DynamicMemoryEnabled $false
         $CPUManufacturer = Get-CimInstance -ClassName Win32_Processor | Foreach-Object Manufacturer
         $BuildVer = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
         if (($BuildVer.CurrentBuild -lt 22000) -and ($CPUManufacturer -eq "AuthenticAMD")) {
@@ -4766,6 +4790,8 @@ if ($params.Parsec -and $params.ParsecVDA) {
     $exitReason = $parsecparsecvdaMessage
 } elseif ($params.Parsec -and $params.VirtualDisplayDriver) {
     $exitReason = $parsecvddMessage
+} elseif ($params.Sunshine -and $params.VirtualDisplayDriverBeta) {
+    Write-Host "Your Virtual Machine now has access to your GPU! You can set up Sunshine now. You can find it under the hidden system tray icons. Set the display to the Virtual Display by clicking the shortcut on the desktop."
 } elseif ($params.Sunshine -and $params.VirtualDisplayDriver) {
     $exitReason = $sunshinevddMessage
 } elseif ($params.Sunshine -and $params.ParsecVDA) {

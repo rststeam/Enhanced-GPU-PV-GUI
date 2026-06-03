@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added latest beta virtual display Beta: Virtual Driver Control (25.7.23)
+- Changed tasks to run on battery as well not only AC for easier development on Laptops
 - `Start-GUI.bat` - Easier one click program launch  
 - Updated Sunshine to the latest version v2026.516.143833 
 - Added a new standalone PowerShell/WPF GUI project under `GUI`.
