@@ -10,7 +10,11 @@
 
 <br>
 
+![GUI PreChecks](Images/GUIinterface.png)
 
+![GUI Create](Images/GUIinterface1.png)
+
+![GUI Maintenance](Images/GUIinterface2.png)
 
 The GUI does not edit the original project scripts. When you click **Create VM**, it creates a temporary generated script in `GUI\.generated` using the settings from the form, then runs that generated copy.
 - Double click on `Start-GUI.bat` to run the GUI console
@@ -25,10 +29,6 @@ While an operation is running, the GUI locks the settings controls and blocks wi
 - `Start-GUI.bat` - Easier one click program launch  
 - Updated Sunshine to the latest version v2026.516.143833
 
-
-![GUI PreChecks](Images/GUIinterface.png)
-![GUI Create](Images/GUIinterface1.png)
-![GUI Maintenance](Images/GUIinterface2.png)
 
 
 ## ℹ About
